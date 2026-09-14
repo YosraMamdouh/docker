@@ -1,4 +1,3 @@
-```groovy
 pipeline {
     agent any
 
@@ -12,7 +11,7 @@ pipeline {
         stage('Getting Repo files') {
             steps {
                 git branch: "main",
-                    
+                    credentialsId: 'github',
                     url: "${REPO_URL}"
             }
         }
@@ -32,7 +31,7 @@ pipeline {
                 script {
                     withCredentials([
                         usernamePassword(
-                          
+                            credentialsId: 'docker',
                             usernameVariable: 'DOCKER_USERNAME',
                             passwordVariable: 'DOCKER_PASSWORD'
                         )
@@ -64,4 +63,3 @@ pipeline {
         }
     }
 }
-```
