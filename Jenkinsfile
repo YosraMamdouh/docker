@@ -1,74 +1,55 @@
-pipeline{
+pipeline {
     agent any
-    
-     environment {
-        IMAGE_NAME='hello_backend'
+ 
+    environment {
+        APP_NAME = 'new-app-nti' 
+        REPO_URL = "https://github.com/YosraMamdouh/docker.git"
     }
 
-    stages{
-        stage("checkout task3 branch"){
-            steps{
-
-                sh '''
-                git checkout task3
-                '''
+    stages {
+        stage('Getting Repo files') {
+            steps {
+                git branch: "main", credentialsId: 'github', url: "${REPO_URL}"
             }
-
         }
-        stage("login"){
-            steps{
-                
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'docker',
-                        usernameVariable: 'DOCKER_USERNAME',
-                        passwordVariable: 'DOCKER_PASSWORD'
-                    )
-                ]) 
 
-                {
-                     sh '''
-                        echo "$DOCKER_PASSWORD" | docker login \
-                                            -u "$DOCKER_USERNAME" \
-                                            --password-stdin                    
-                                            
-                        '''
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh """
+                        docker build -t ${APP_NAME}:${BUILD_NUMBER} .
+                    """
                 }
-
-               
             }
-         
         }
 
-        stage("build image"){
-            steps{
-            sh '''
-                docker build -t YosraMamdouh/${IMAGE_NAME}:${BUILD_NUMBER} .
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
 
-            '''
+                        sh """
+                            echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin
+
+                            docker tag ${APP_NAME}:${BUILD_NUMBER} ${DOCKER_USERNAME}/${APP_NAME}:${BUILD_NUMBER}
+
+                            docker push ${DOCKER_USERNAME}/${APP_NAME}:${BUILD_NUMBER}
+                        """
+
+                    }
+                }
             }
-           
+        }
 
-        }
-        stage("push image"){
-            steps{
-            sh '''
-                docker push YosraMamdouh/${IMAGE_NAME}:${BUILD_NUMBER}
-
-            '''
-            } 
-
-        }
-    }
-    post{
-        always{
-            echo "========always========"
-        }
-        success{
-            echo "========pipeline executed successfully ========"
-        }
-        failure{
-            echo "========pipeline execution failed========"
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    sh """
+                        docker run -p 5000:5000 --name "${APP_NAME}"-"main"-${BUILD_NUMBER} -d ${APP_NAME}:${BUILD_NUMBER}
+                        docker ps
+                    """
+                }
+            }
         }
     }
 }
