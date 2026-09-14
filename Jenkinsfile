@@ -1,15 +1,19 @@
+```groovy
 pipeline {
     agent any
- 
+
     environment {
-        APP_NAME = 'new-app-nti' 
+        APP_NAME = 'new-app-nti'
         REPO_URL = "https://github.com/YosraMamdouh/docker.git"
     }
 
     stages {
+
         stage('Getting Repo files') {
             steps {
-                git branch: "main", credentialsId: 'github', url: "${REPO_URL}"
+                git branch: "main",
+                    credentialsId: 'github',
+                    url: "${REPO_URL}"
             }
         }
 
@@ -26,16 +30,20 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'docker',
+                            usernameVariable: 'DOCKER_USERNAME',
+                            passwordVariable: 'DOCKER_PASSWORD'
+                        )
+                    ]) {
+                        sh '''
+                            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
-                        sh """
-                            echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin
+                            docker tag new-app-nti:$BUILD_NUMBER $DOCKER_USERNAME/new-app-nti:$BUILD_NUMBER
 
-                            docker tag ${APP_NAME}:${BUILD_NUMBER} ${DOCKER_USERNAME}/${APP_NAME}:${BUILD_NUMBER}
-
-                            docker push ${DOCKER_USERNAME}/${APP_NAME}:${BUILD_NUMBER}
-                        """
-
+                            docker push $DOCKER_USERNAME/new-app-nti:$BUILD_NUMBER
+                        '''
                     }
                 }
             }
@@ -45,7 +53,10 @@ pipeline {
             steps {
                 script {
                     sh """
-                        docker run -p 5000:5000 --name "${APP_NAME}"-"main"-${BUILD_NUMBER} -d ${APP_NAME}:${BUILD_NUMBER}
+                        docker run -p 5000:5000 \
+                            --name "${APP_NAME}-main-${BUILD_NUMBER}" \
+                            -d ${APP_NAME}:${BUILD_NUMBER}
+
                         docker ps
                     """
                 }
@@ -53,3 +64,4 @@ pipeline {
         }
     }
 }
+```
