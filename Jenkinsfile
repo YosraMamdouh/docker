@@ -63,18 +63,21 @@ pipeline {
             }
         }
 
-       stage('Run Docker Container') {
-    steps {
-        script {
-            sh """
-                docker ps -q --filter "publish=5000" | xargs -r docker rm -f
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    def portMap = [main: '5000', dev: '5001', stg: '5002']
+                    def hostPort = portMap[params.Git_Branch]
 
-                docker run -p 5000:5000 \
-                    --name "${APP_NAME}-${params.Git_Branch}" \
-                    -d ${APP_NAME}:${BUILD_NUMBER}
+                    sh """
+                        docker rm -f ${APP_NAME}-${params.Git_Branch} || true
 
-                docker ps
-            """
+                        docker run -p ${hostPort}:5000 \
+                            --name "${APP_NAME}-${params.Git_Branch}" \
+                            -d ${APP_NAME}:${BUILD_NUMBER}
+
+                        docker ps
+                    """
                 }
             }
         }
