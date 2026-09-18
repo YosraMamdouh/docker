@@ -19,9 +19,14 @@ pipeline {
         stage('Getting Repo files') {
             steps {
                 dir('app') {
-                    git branch: "${Git_Branch}",
-                        credentialsId: 'github',
-                        url: "${REPO_URL}"
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: "*/${params.Git_Branch}"]],
+                        userRemoteConfigs: [[
+                            url: "${REPO_URL}",
+                            credentialsId: 'github'
+                        ]]
+                    ])
                 }
             }
         }
@@ -62,10 +67,10 @@ pipeline {
             steps {
                 script {
                     sh """
-                        docker rm -f ${APP_NAME}-${Git_Branch} || true
+                        docker rm -f ${APP_NAME}-${params.Git_Branch} || true
 
                         docker run -p 5000:5000 \
-                            --name "${APP_NAME}-${Git_Branch}" \
+                            --name "${APP_NAME}-${params.Git_Branch}" \
                             -d ${APP_NAME}:${BUILD_NUMBER}
 
                         docker ps
