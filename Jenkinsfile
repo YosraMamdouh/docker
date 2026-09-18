@@ -9,7 +9,7 @@ pipeline {
     parameters {
         choice(
             name: 'Git_Branch',
-            choices: ['main', 'dev', 'staging'],
+            choices: ['main', 'dev', 'stg'],
             description: 'Branch to build'
         )
     }
