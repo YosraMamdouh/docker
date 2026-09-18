@@ -17,7 +17,7 @@ pipeline {
 
         stage('Getting Repo files') {
             steps {
-                git branch: "${Git_Branch}",
+                git branch: "*/${Git_Branch}",
                     credentialsId: 'github',
                     url: "${REPO_URL}"
             }
