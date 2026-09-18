@@ -63,18 +63,18 @@ pipeline {
             }
         }
 
-        stage('Run Docker Container') {
-            steps {
-                script {
-                    sh """
-                        docker rm -f ${APP_NAME}-${params.Git_Branch} || true
+       stage('Run Docker Container') {
+    steps {
+        script {
+            sh """
+                docker ps -q --filter "publish=5000" | xargs -r docker rm -f
 
-                        docker run -p 5000:5000 \
-                            --name "${APP_NAME}-${params.Git_Branch}" \
-                            -d ${APP_NAME}:${BUILD_NUMBER}
+                docker run -p 5000:5000 \
+                    --name "${APP_NAME}-${params.Git_Branch}" \
+                    -d ${APP_NAME}:${BUILD_NUMBER}
 
-                        docker ps
-                    """
+                docker ps
+            """
                 }
             }
         }
